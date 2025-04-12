@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const LoanApproval = require("../models/LoanApproval");
 const LoanApplication = require("../models/LoanApplication");
-const Notification = require("../models/Notification");
+const User = require('../models/User');
 const generateCustomId = require("../utils/generateCustomId");
 
 // Get all pending Loan Applications
@@ -67,52 +67,41 @@ router.get("/rejected", async (req, res) => {
   });
 
   
-
-
-// Approve a loan
-router.post("/", async (req, res) => {
+// Staff approves/rejects loan
+router.post('/', async (req, res) => {
   try {
-    const { loan_id, staff_id, approval_status } = req.body;
+    const { loan_id, staff_id, approval_status, remarks } = req.body;
 
-    const application = await LoanApplication.findOne({ loan_id });
-    if (!application) {
-      return res.status(404).json({ error: "Loan application not found" });
+    // Validate staff
+    const staff = await User.findOne({ user_id: staff_id, role: 'staff' });
+    if (!staff) {
+      return res.status(400).json({ error: 'Invalid staff_id or not authorized' });
     }
 
-    // Update application status
-    application.status = approval_status;
-    await application.save();
+    const loan = await LoanApplication.findOne({ loan_id });
+    if (!loan || loan.status !== 'pending') {
+      return res.status(400).json({ error: 'Loan not found or already processed' });
+    }
 
-    const approval_id = await generateCustomId("APPROVAL");
+    const approval_id = await generateCustomId('APR');
     const approval = new LoanApproval({
       approval_id,
       loan_id,
       staff_id,
       approval_status,
-      approval_date: new Date(),
+      remarks,
+      approval_date: new Date()
     });
 
     await approval.save();
 
-    // Send notification
-    const notification_id = await generateCustomId("NOTI");
-    const message = `Your loan ${loan_id} has been ${approval_status.toLowerCase()}`;
-    const notification = new Notification({
-      notification_id,
-      cus_id: application.cus_id,
-      message,
-      date: new Date(),
-    });
+    // Update loan status
+    loan.status = approval_status;
+    await loan.save();
 
-    await notification.save();
-
-    res
-      .status(201)
-      .json({ message: "Loan processed and notification sent", approval_id });
+    res.status(201).json({ message: `Loan ${approval_status}`, approval_id });
   } catch (err) {
-    res
-      .status(500)
-      .json({ error: "Failed to approve loan", details: err.message });
+    res.status(500).json({ error: 'Loan approval failed', details: err.message });
   }
 });
 
