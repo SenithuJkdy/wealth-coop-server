@@ -24,6 +24,8 @@ app.use('/api/accounts', require('./routes/accountRoutes'));
 app.use('/api/transactions', require('./routes/transactionRoutes'));
 app.use('/api/loans', require('./routes/loanApplicationRoutes'));
 app.use('/api/approvals', require('./routes/loanApprovalRoutes'));
+app.use('/api/prediction', require('./routes/loanPredictionRoutes'));
+app.use('/api/repayments', require('./routes/loanRepaymentRoutes'));
 app.use('/api/analytics', require('./routes/analyticsRoutes'));
 app.use('/api/notifications', require('./routes/notificationRoutes'));
 
