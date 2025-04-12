@@ -1,129 +1,129 @@
-const express = require("express");
+const express = require('express');
 const router = express.Router();
-const Account = require("../models/Account");
+const Account = require('../models/Account');
 const User = require('../models/User');
-const generateCustomId = require("../utils/generateCustomId"); 
+const generateCustomId = require('../utils/generateCustomId');
 
-// Create a new account
+// Create a new account for a user
 router.post('/create', async (req, res) => {
-    try {
-        const { cus_id, account_type, balance } = req.body;
-
-        // 1. Check if the customer exists
-        const existingCustomer = await Customer.findOne({ cus_id });
-
-        if (!existingCustomer) {
-            return res.status(404).json({
-                error: `Customer with ID ${cus_id} does not exist`
-            });
-        }
-
-        // 2. Generate a unique account_id
-        const account_id = await generateCustomId('ACC');
-
-        // 3. Create the account
-        const newAccount = new Account({
-            account_id,
-            cus_id,
-            account_type,
-            balance
-        });
-
-        await newAccount.save();
-
-        res.status(201).json({ message: 'Account created successfully', account_id });
-    } catch (err) {
-        res.status(500).json({ error: 'Failed to create account', details: err.message });
-    }
-});
-
-// Get account and customer by account_id
-router.get("/:account_id", async (req, res) => {
-    try {
-      const account = await Account.findOne({
-        account_id: req.params.account_id,
-      });
-  
-      if (!account) {
-        return res.status(404).json({ error: "Account not found" });
-      }
-  
-      // Find the customer using cus_id from the account
-      const customer = await Customer.findOne({ cus_id: account.cus_id });
-  
-      if (!customer) {
-        return res.status(404).json({ error: "Customer linked to this account not found" });
-      }
-  
-      res.json({
-        account,
-        customer
-      });
-    } catch (err) {
-      res.status(500).json({
-        error: "Failed to get account and customer details",
-        details: err.message
-      });
-    }
-  });
-  
-// Update account
-router.put("/:account_id", async (req, res) => {
   try {
-    const updated = await Account.findOneAndUpdate(
-      { account_id: req.params.account_id },
-      req.body,
-      { new: true }
-    );
+    const { user_id, account_type, balance, currency } = req.body;
 
-    if (!updated) {
-      return res.status(404).json({ error: "Account not found" });
+    // Validate user
+    const user = await User.findOne({ user_id });
+    if (!user) {
+      return res.status(400).json({ error: 'User not found' });
     }
 
-    res.json({ message: "Account updated successfully", updated });
-  } catch (err) {
-    res
-      .status(500)
-      .json({ error: "Failed to update account", details: err.message });
-  }
-});
+    const account_id = await generateCustomId('ACC');
+    const account_number = `ACCT${Math.floor(1000000000 + Math.random() * 9000000000)}`;
 
-// Delete account
-router.delete("/:account_id", async (req, res) => {
-  try {
-    const deleted = await Account.findOneAndDelete({
-      account_id: req.params.account_id,
+    const newAccount = new Account({
+      account_id,
+      user_id,
+      account_number,
+      account_type,
+      balance,
+      currency
     });
 
-    if (!deleted) {
-      return res.status(404).json({ error: "Account not found" });
-    }
+    await newAccount.save();
+    res.status(201).json({ message: 'Account created successfully', account_id, account_number });
 
-    res.json({ message: "Account deleted successfully" });
   } catch (err) {
-    res
-      .status(500)
-      .json({ error: "Failed to delete account", details: err.message });
+    res.status(500).json({ error: 'Failed to create account', details: err.message });
   }
 });
 
 // Get all accounts
-router.get("/", async (req, res) => {
-    try {
-      const accounts = await Account.find();
-      res.json(accounts);
-    } catch (err) {
-      res
-        .status(500)
-        .json({ error: "Failed to fetch accounts", details: err.message });
-    }
-  });
+router.get('/', async (req, res) => {
+  try {
+    const accounts = await Account.find();
+    res.json(accounts);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch accounts', details: err.message });
+  }
+});
 
-router.get('/:account_id/balance', async (req, res) => {
+// Get account by ID
+router.get('/:account_id', async (req, res) => {
+  try {
     const account = await Account.findOne({ account_id: req.params.account_id });
-    if (!account) return res.status(404).json({ error: 'Account not found' });
-    res.json({ balance: account.balance });
-  });
-  
+    if (!account) {
+      return res.status(404).json({ error: 'Account not found' });
+    }
+    res.json(account);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch account', details: err.message });
+  }
+});
 
+// Get all accounts for a specific user
+router.get('/user/:user_id', async (req, res) => {
+  try {
+    const user = await User.findOne({ user_id: req.params.user_id });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const accounts = await Account.find({ user_id: req.params.user_id });
+    res.json({ user_id: req.params.user_id, accounts });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch user accounts', details: err.message });
+  }
+});
+
+// Get account balance
+router.get('/:account_id/balance', async (req, res) => {
+  try {
+    const account = await Account.findOne({ account_id: req.params.account_id });
+    if (!account) {
+      return res.status(404).json({ error: 'Account not found' });
+    }
+
+    res.json({ account_id: account.account_id, balance: account.balance });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch balance', details: err.message });
+  }
+});
+
+// Update account by ID
+router.put('/:account_id', async (req, res) => {
+  try {
+    const { account_type, balance, currency } = req.body;
+
+    // Find account by account_id
+    const account = await Account.findOne({ account_id: req.params.account_id });
+    if (!account) {
+      return res.status(404).json({ error: 'Account not found' });
+    }
+
+    // Update fields if provided
+    if (account_type) account.account_type = account_type;
+    if (balance !== undefined) account.balance = balance; // Allow balance to be 0
+    if (currency) account.currency = currency;
+
+    await account.save();
+    res.json({ message: 'Account updated successfully', account });
+
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to update account', details: err.message });
+  }
+});
+
+// Delete account by ID
+router.delete('/:account_id', async (req, res) => {
+  try {
+    const account = await Account.findOne({ account_id: req.params.account_id });
+    if (!account) {
+      return res.status(404).json({ error: 'Account not found' });
+    }
+
+    await Account.deleteOne({ account_id: req.params.account_id });
+    res.json({ message: 'Account deleted successfully', account_id: req.params.account_id });
+
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to delete account', details: err.message });
+  }
+});
 module.exports = router;
