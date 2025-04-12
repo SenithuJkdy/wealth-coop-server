@@ -28,7 +28,7 @@ router.post('/', async (req, res) => {
         cus_id,
         account_id,
         amount,
-        status: 'Pending',
+        status: 'pending',
         application_date: new Date()
       });
   

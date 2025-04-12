@@ -6,7 +6,7 @@ const LoanApplicationSchema = new mongoose.Schema({
   account_id: String,
   application_date: Date,
   amount: Number,
-  status: String
+  status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' }
 }, { timestamps: true });
 
 module.exports = mongoose.model('LoanApplication', LoanApplicationSchema);

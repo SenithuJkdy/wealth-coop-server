@@ -24,9 +24,9 @@ app.use('/api/staff', require('./routes/staffRoutes'));
 app.use('/api/accounts', require('./routes/accountRoutes'));
 app.use('/api/transactions', require('./routes/transactionRoutes'));
 app.use('/api/loans', require('./routes/loanApplicationRoutes'));
-// app.use('/api/approvals', require('./routes/loanApprovalRoutes'));
-// app.use('/api/analytics', require('./routes/analyticsRoutes'));
-// app.use('/api/notifications', require('./routes/notificationRoutes'));
+app.use('/api/approvals', require('./routes/loanApprovalRoutes'));
+app.use('/api/analytics', require('./routes/analyticsRoutes'));
+app.use('/api/notifications', require('./routes/notificationRoutes'));
 
 
 app.get("/", (req, res) => res.send("Hello World !"));
