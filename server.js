@@ -31,6 +31,9 @@ app.use('/api/notifications', require('./routes/notificationRoutes'));
 app.use('/api/logs',require('./routes/auditLogRoutes'));
 app.use('/api/support',require('./routes/supportRoutes'));
 app.use('/api/branch',require('./routes/branchRoutes'));
+app.use('/api/forecasts',require('./routes/loanForecastRoutes'));
+app.use('/api/budgeting',require('./routes/budgetingRoutes'));
+app.use('/api/alerts',require('./routes/securityRoutes'));
 
 
 app.get("/", (req, res) => res.send("Hello World !"));
