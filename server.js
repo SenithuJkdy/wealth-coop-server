@@ -28,6 +28,8 @@ app.use('/api/prediction', require('./routes/loanPredictionRoutes'));
 app.use('/api/repayments', require('./routes/loanRepaymentRoutes'));
 app.use('/api/analytics', require('./routes/analyticsRoutes'));
 app.use('/api/notifications', require('./routes/notificationRoutes'));
+app.use('/api/logs',require('./routes/auditLogRoutes'));
+
 
 
 app.get("/", (req, res) => res.send("Hello World !"));

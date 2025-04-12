@@ -3,6 +3,7 @@ const router = express.Router();
 const bcrypt = require('bcrypt');
 const User = require('../models/User');
 const generateCustomId = require('../utils/generateCustomId');
+const logAction = require('../utils/logAction');
 
 // Register a new user (customer or staff)
 router.post('/register', async (req, res) => {
@@ -39,9 +40,11 @@ router.post('/register', async (req, res) => {
 // Login user
 router.post('/login', async (req, res) => {
   try {
+    
     const { email, password } = req.body;
 
     const user = await User.findOne({ email });
+    await logAction(user.user_id, 'login', 'users', req.ip);
     if (!user) return res.status(401).json({ error: 'Invalid email or password' });
 
     const isValid = await bcrypt.compare(password, user.password_hash);
