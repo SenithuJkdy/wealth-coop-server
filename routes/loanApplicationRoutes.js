@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const LoanApplication = require('../models/LoanApplication');
-const Customer = require('../models/Customer');
+const User = require('../models/User');
 const Account = require('../models/Account');
 const generateCustomId = require('../utils/generateCustomId');
 

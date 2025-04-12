@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const Account = require("../models/Account");
-const Customer = require('../models/Customer');
+const User = require('../models/User');
 const generateCustomId = require("../utils/generateCustomId"); 
 
 // Create a new account

@@ -2,8 +2,7 @@ const mongoose = require('mongoose');
 require('dotenv').config();
 
 // Import models
-const Customer = require('./models/Customer');
-const BankStaff = require('./models/BankStaff');
+const User = require('./models/User');
 const Account = require('./models/Account');
 const Transaction = require('./models/Transaction');
 const LoanApplication = require('./models/LoanApplication');
@@ -19,8 +18,7 @@ const connectDB = async () => {
 
         // Create collections from models (placeholders)
         await Promise.all([
-            Customer.createCollection(),
-            BankStaff.createCollection(),
+            User.createCollection(),
             Account.createCollection(),
             Transaction.createCollection(),
             LoanApplication.createCollection(),
