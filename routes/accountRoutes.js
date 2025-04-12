@@ -119,4 +119,11 @@ router.get("/", async (req, res) => {
     }
   });
 
+router.get('/:account_id/balance', async (req, res) => {
+    const account = await Account.findOne({ account_id: req.params.account_id });
+    if (!account) return res.status(404).json({ error: 'Account not found' });
+    res.json({ balance: account.balance });
+  });
+  
+
 module.exports = router;

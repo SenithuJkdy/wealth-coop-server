@@ -131,4 +131,23 @@ router.get("/", async (req, res) => {
   }
 });
 
+// Get all accounts for a specific customer
+router.get('/by-customer/:cus_id', async (req, res) => {
+  try {
+    const { cus_id } = req.params;
+
+    // Check if the customer exists
+    const customer = await Customer.findOne({ cus_id });
+    if (!customer) {
+      return res.status(404).json({ error: 'Customer not found' });
+    }
+
+    // Find all accounts associated with the customer
+    const accounts = await Account.find({ cus_id });
+    res.json({ cus_id, accounts });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch customer accounts', details: err.message });
+  }
+});
+
 module.exports = router;
