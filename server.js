@@ -21,7 +21,7 @@ connectDB();
 // Route imports
 app.use('/api/customers', require('./routes/customerRoutes'));
 app.use('/api/staff', require('./routes/staffRoutes'));
-// app.use('/api/accounts', require('./routes/accountRoutes'));
+app.use('/api/accounts', require('./routes/accountRoutes'));
 // app.use('/api/transactions', require('./routes/transactionRoutes'));
 // app.use('/api/loans', require('./routes/loanApplicationRoutes'));
 // app.use('/api/approvals', require('./routes/loanApprovalRoutes'));
