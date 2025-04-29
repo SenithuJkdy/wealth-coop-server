@@ -30,7 +30,7 @@ router.post('/register', async (req, res) => {
     });
 
     await newUser.save();
-    res.status(201).json({ message: 'User registered successfully', user_id });
+    res.status(201).json({ message: 'User registered successfully', user_id, role, full_name  });
 
   } catch (err) {
     res.status(500).json({ error: 'Registration failed', details: err.message });
@@ -49,7 +49,7 @@ router.post('/login', async (req, res) => {
 
     const isValid = await bcrypt.compare(password, user.password_hash);
     if (!isValid) return res.status(401).json({ error: 'Invalid email or password' });
-
+  console.log(req.body);
     res.json({
       message: 'Login successful',
       user_id: user.user_id,

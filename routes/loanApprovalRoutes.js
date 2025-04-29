@@ -105,4 +105,51 @@ router.post('/', async (req, res) => {
   }
 });
 
+// Get approved Loan Applications by Account ID
+router.get("/approved/search", async (req, res) => {
+  try {
+    const { account_id } = req.query;
+
+    if (!account_id) {
+      return res.status(400).json({ error: "Provide account_id in query" });
+    }
+
+    const loans = await LoanApplication.find({ status: "approved", account_id });
+    res.json(loans);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch approved loans", details: err.message });
+  }
+});
+
+// Get all Loan Applications
+router.get("/all", async (req, res) => {
+  try {
+    const allLoans = await LoanApplication.find();
+    res.json(allLoans);
+  } catch (err) {
+    res
+      .status(500)
+      .json({ error: "Failed to fetch all loans", details: err.message });
+  }
+});
+
+// DELETE a loan approval and related loan
+router.delete('/:loan_id', async (req, res) => {
+  try {
+    const { loan_id } = req.params;
+
+    // Delete from LoanApproval
+    await LoanApproval.deleteOne({ loan_id });
+
+    // Delete from LoanApplication
+    await LoanApplication.deleteOne({ loan_id });
+
+    res.json({ message: 'Loan and approval deleted successfully' });
+  } catch (err) {
+    res.status(500).json({ error: 'Delete failed', details: err.message });
+  }
+});
+
+
+
 module.exports = router;
