@@ -1,69 +1,114 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const Transaction = require('../models/Transaction');
-const Account = require('../models/Account');
-const generateCustomId = require('../utils/generateCustomId');
+const Transaction = require("../models/Transaction");
+const Account = require("../models/Account");
+const generateCustomId = require("../utils/generateCustomId");
 
 // Create a transaction (Deposit or Withdrawal)
-router.post('/', async (req, res) => {
+router.post("/withdraw/:receiver_acc_id", async (req, res) => {
   try {
-    const { account_id, transaction_type, amount } = req.body;
+    const { account_id, amount } = req.body;
+    const receiver_acc_id = req.params.receiver_acc_id;
 
-    const account = await Account.findOne({ account_id });
-    if (!account) return res.status(404).json({ error: 'Account not found' });
+    // Find sender account
+    const senderAccount = await Account.findOne({ account_id });
+    if (!senderAccount)
+      return res.status(404).json({ error: "Sender Account not found" });
 
-    if (transaction_type === 'Withdrawal') {
-      if (account.balance < amount) {
-        return res.status(400).json({ error: 'Insufficient balance for withdrawal' });
-      }
-      account.balance -= amount;
-    } else if (transaction_type === 'Deposit') {
-      account.balance += amount;
-    } else {
-      return res.status(400).json({ error: 'Invalid transaction type' });
+    // Find receiver account
+    const receiverAccount = await Account.findOne({ account_id: receiver_acc_id });
+    if (!receiverAccount)
+      return res.status(404).json({ error: "Receiver Account not found" });
+
+    // Check for sufficient balance
+    if (senderAccount.balance < amount) {
+      return res.status(400).json({ error: "Insufficient balance" });
     }
 
-    await account.save();
+    // Perform the transfer
+    senderAccount.balance -= amount;
+    receiverAccount.balance += amount;
 
-    const transaction_id = await generateCustomId('TXN');
+    await senderAccount.save();
+    await receiverAccount.save();
+
+    const transaction_id = await generateCustomId("TXN");
     const transaction = new Transaction({
       transaction_id,
       account_id,
-      transaction_type,
+      transaction_type: "Withdrawal", // fixed
       amount,
-      status: 'Completed'
+      status: "Completed",
     });
-
     await transaction.save();
 
     res.status(201).json({
-      message: `${transaction_type} successful`,
+      message: "Withdrawal (transfer) successful",
       transaction_id,
-      new_balance: account.balance
+      new_balance: senderAccount.balance,
     });
-
   } catch (err) {
-    res.status(500).json({ error: 'Transaction failed', details: err.message });
+    res.status(500).json({ error: "Transaction failed", details: err.message });
   }
 });
 
+router.post("/deposit/:account_id", async (req, res) => {
+  try {
+    const { amount } = req.body;
+    const account_id = req.params.account_id;
+
+    const account = await Account.findOne({ account_id });
+    if (!account)
+      return res.status(404).json({ error: "Account not found" });
+
+    account.balance += amount;
+    await account.save();
+
+    const transaction_id = await generateCustomId("TXN");
+    const transaction = new Transaction({
+      transaction_id,
+      account_id,
+      transaction_type: "Deposit",
+      amount,
+      status: "Completed",
+    });
+    await transaction.save();
+
+    res.status(201).json({
+      message: "Deposit successful",
+      transaction_id,
+      new_balance: account.balance,
+    });
+  } catch (err) {
+    res.status(500).json({ error: "Deposit failed", details: err.message });
+  }
+});
+
+
 // Get all transactions
-router.get('/', async (req, res) => {
+router.get("/", async (req, res) => {
   try {
     const transactions = await Transaction.find().sort({ createdAt: -1 });
     res.json(transactions);
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch transactions', details: err.message });
+    res
+      .status(500)
+      .json({ error: "Failed to fetch transactions", details: err.message });
   }
 });
 
 // Get transactions for an account
-router.get('/account/:account_id', async (req, res) => {
+router.get("/account/:account_id", async (req, res) => {
   try {
-    const transactions = await Transaction.find({ account_id: req.params.account_id }).sort({ createdAt: -1 });
+    const transactions = await Transaction.find({
+      account_id: req.params.account_id,
+    }).sort({ createdAt: -1 });
     res.json(transactions);
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch account transactions', details: err.message });
+    res.status(500).json({
+      error: "Failed to fetch account transactions",
+      details: err.message,
+    });
   }
 });
 
