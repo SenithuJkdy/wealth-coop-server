@@ -5,10 +5,10 @@ const Account = require("../models/Account");
 const generateCustomId = require("../utils/generateCustomId");
 
 // Create a transaction (Deposit or Withdrawal)
-router.post("/withdraw/:receiver_acc_id", async (req, res) => {
+router.post("/withdraw/:receiver_acc_no", async (req, res) => {
   try {
     const { account_id, amount } = req.body;
-    const receiver_acc_id = req.params.receiver_acc_id;
+    const receiver_acc_no = req.params.receiver_acc_no;
 
     // Find sender account
     const senderAccount = await Account.findOne({ account_id });
@@ -16,7 +16,7 @@ router.post("/withdraw/:receiver_acc_id", async (req, res) => {
       return res.status(404).json({ error: "Sender Account not found" });
 
     // Find receiver account
-    const receiverAccount = await Account.findOne({ account_id: receiver_acc_id });
+    const receiverAccount = await Account.findOne({ account_number: receiver_acc_no });
     if (!receiverAccount)
       return res.status(404).json({ error: "Receiver Account not found" });
 
