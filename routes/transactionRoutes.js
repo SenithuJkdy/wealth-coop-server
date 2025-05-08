@@ -20,10 +20,10 @@ router.post("/withdraw/:receiver_acc_no", async (req, res) => {
     if (!receiverAccount)
       return res.status(404).json({ error: "Receiver Account not found" });
 
-    // Check for sufficient balance
-    if (senderAccount.balance < amount) {
-      return res.status(400).json({ error: "Insufficient balance" });
-    }
+// Check if transaction would reduce balance below 2000
+if (senderAccount.balance - amount < 2000) {
+  return res.status(400).json({ error: "Insufficient balance: Minimum balance of 2000 must be maintained" });
+}
 
     // Perform the transfer
     senderAccount.balance -= amount;
