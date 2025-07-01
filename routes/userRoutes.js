@@ -4,6 +4,7 @@ const bcrypt = require('bcrypt');
 const User = require('../models/User');
 const generateCustomId = require('../utils/generateCustomId');
 const logAction = require('../utils/logAction');
+const Account = require('../models/Account');
 
 // Register a new user (customer or staff)
 router.post('/register', async (req, res) => {
@@ -118,17 +119,28 @@ router.put('/:user_id', async (req, res) => {
   });
   
   // Delete user by ID
-  router.delete('/:user_id', async (req, res) => {
-    try {
-      const user = await User.findOne({ user_id: req.params.user_id });
-      if (!user) return res.status(404).json({ error: 'User not found' });
-  
-      await User.deleteOne({ user_id: req.params.user_id });
-      res.json({ message: 'User deleted successfully', user_id: req.params.user_id });
-  
-    } catch (err) {
-      res.status(500).json({ error: 'Failed to delete user', details: err.message });
+router.delete('/:user_id', async (req, res) => {
+  try {
+    const user = await User.findOne({ user_id: req.params.user_id });
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    // Find and delete the related account
+    const account = await Account.findOne({ user_id: req.params.user_id });
+    if (account) {
+      await Account.deleteOne({ user_id: req.params.user_id });
     }
-  });
+
+    await User.deleteOne({ user_id: req.params.user_id });
+
+    res.json({
+      message: 'User and associated account deleted successfully',
+      user_id: req.params.user_id,
+      account_number: account ? account.account_number : null
+    });
+
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to delete user', details: err.message });
+  }
+});
   
 module.exports = router;
