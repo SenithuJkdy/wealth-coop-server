@@ -2,66 +2,11 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcrypt');
 const User = require('../models/User');
-const generateCustomId = require('../utils/generateCustomId');
-const logAction = require('../utils/logAction');
 const Account = require('../models/Account');
+const { registerUser, loginUser } = require('../controllers/userController');
 
-// Register a new user (customer or staff)
-router.post('/register', async (req, res) => {
-  try {
-    const { full_name, email, phone, password, role } = req.body;
-
-    if (!email || !password || !full_name || !role) {
-      return res.status(400).json({ error: 'Required fields: full_name, email, password, role' });
-    }
-
-    const existing = await User.findOne({ email });
-    if (existing) return res.status(400).json({ error: 'Email already in use' });
-
-    const user_id = await generateCustomId('USR');
-    const password_hash = await bcrypt.hash(password, 10);
-
-    const newUser = new User({
-      user_id,
-      full_name,
-      email,
-      phone,
-      password_hash,
-      role
-    });
-
-    await newUser.save();
-    res.status(201).json({ message: 'User registered successfully', user_id, role, full_name  });
-
-  } catch (err) {
-    res.status(500).json({ error: 'Registration failed', details: err.message });
-  }
-});
-
-// Login user
-router.post('/login', async (req, res) => {
-  try {
-    
-    const { email, password } = req.body;
-
-    const user = await User.findOne({ email });
-    await logAction(user.user_id, 'login', 'users', req.ip);
-    if (!user) return res.status(401).json({ error: 'Invalid email or password' });
-
-    const isValid = await bcrypt.compare(password, user.password_hash);
-    if (!isValid) return res.status(401).json({ error: 'Invalid email or password' });
-  console.log(req.body);
-    res.json({
-      message: 'Login successful',
-      user_id: user.user_id,
-      role: user.role,
-      full_name: user.full_name
-    });
-
-  } catch (err) {
-    res.status(500).json({ error: 'Login failed', details: err.message });
-  }
-});
+router.post('/register', registerUser);
+router.post('/login', loginUser);
 
 // Get all users or by role in User Management
 router.get('/', async (req, res) => {
