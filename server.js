@@ -34,6 +34,8 @@ app.use('/api/branch',require('./routes/branchRoutes'));
 app.use('/api/forecasts',require('./routes/loanForecastRoutes'));
 app.use('/api/budgeting',require('./routes/budgetingRoutes'));
 app.use('/api/alerts',require('./routes/securityRoutes'));
+app.use("/api/bills", require("./routes/billPaymentRoutes"));
+app.use("/api/scheduled-payments", require('./routes/scheduledPaymentsRoutes'));
 
 
 app.get("/", (req, res) => res.send("Hello World !"));
