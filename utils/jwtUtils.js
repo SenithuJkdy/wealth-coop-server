@@ -9,6 +9,6 @@ exports.generateToken = (user) => {
       email: user.email
     },
     JWT_SECRET,
-    { expiresIn: '2h' }
+    { expiresIn: '1h' }
   );
 };

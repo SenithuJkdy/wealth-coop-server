@@ -125,4 +125,39 @@ router.delete('/:loan_id', async (req, res) => {
   }
 });
 
+router.get("/all/:account_id", async (req, res) => {
+  try {
+    const { account_id } = req.params;
+
+    if (!account_id) {
+      return res.status(400).json({ error: "Provide account_id in query" });
+    }
+
+    // Fetch all loans with their approval remarks
+    const loans = await LoanApplication.aggregate([
+      { $match: { account_id } },
+      {
+        $lookup: {
+          from: "loanapprovals", // collection name
+          localField: "loan_id",
+          foreignField: "loan_id",
+          as: "approval_details",
+        },
+      },
+      {
+        $addFields: {
+          remarks: { $arrayElemAt: ["$approval_details.remarks", 0] },
+        },
+      },
+      { $project: { approval_details: 0 } }, // remove the full approval details
+    ]);
+
+    res.json(loans);
+  } catch (err) {
+    res
+      .status(500)
+      .json({ error: "Failed to fetch loans", details: err.message });
+  }
+});
+
 module.exports = router;

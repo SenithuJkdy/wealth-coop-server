@@ -7,7 +7,14 @@ const generateCustomId = require("../utils/generateCustomId");
 // Create a transaction (Deposit or Withdrawal)
 router.post("/withdraw/:receiver_acc_no", async (req, res) => {
   try {
-    const { account_id, amount } = req.body;
+    const { 
+      account_id, 
+      amount, 
+      beneficiary_bank,
+      beneficiary_name,
+      purpose,
+      description 
+    } = req.body;
     const receiver_acc_no = req.params.receiver_acc_no;
 
     // Find sender account
@@ -20,10 +27,19 @@ router.post("/withdraw/:receiver_acc_no", async (req, res) => {
     if (!receiverAccount)
       return res.status(404).json({ error: "Receiver Account not found" });
 
-// Check if transaction would reduce balance below 2000
-if (senderAccount.balance - amount < 2000) {
-  return res.status(400).json({ error: "Insufficient balance: Minimum balance of 2000 must be maintained" });
-}
+    // Check if transaction would reduce balance below 2000
+    if (senderAccount.balance - amount < 2000) {
+      return res.status(400).json({ 
+        error: "Insufficient balance: Minimum balance of 2000 must be maintained" 
+      });
+    }
+
+    // Validate required fields
+    if (!beneficiary_bank || !beneficiary_name) {
+      return res.status(400).json({ 
+        error: "Beneficiary bank and name are required" 
+      });
+    }
 
     // Perform the transfer
     senderAccount.balance -= amount;
@@ -36,22 +52,34 @@ if (senderAccount.balance - amount < 2000) {
     const transaction = new Transaction({
       transaction_id,
       account_id,
-      transaction_type: "Withdrawal", // fixed
+      transaction_type: "Withdrawal",
       amount,
       status: "Completed",
+      beneficiary_bank,
+      beneficiary_name,
+      purpose: purpose || "Personal",
+      description,
+      receiver_account: receiver_acc_no
     });
+
     await transaction.save();
 
     res.status(201).json({
-      message: "Withdrawal (transfer) successful",
+      message: "Transfer successful",
       transaction_id,
       new_balance: senderAccount.balance,
+      beneficiary_name,
+      beneficiary_bank
     });
   } catch (err) {
-    res.status(500).json({ error: "Transaction failed", details: err.message });
+    res.status(500).json({ 
+      error: "Transaction failed", 
+      details: err.message 
+    });
   }
 });
 
+// Deposit endpoint (unchanged)
 router.post("/deposit/:account_id", async (req, res) => {
   try {
     const { amount } = req.body;
@@ -84,25 +112,30 @@ router.post("/deposit/:account_id", async (req, res) => {
   }
 });
 
-
-// Get all transactions
+// Get all transactions with additional fields
 router.get("/", async (req, res) => {
   try {
-    const transactions = await Transaction.find().sort({ createdAt: -1 });
+    const transactions = await Transaction.find()
+      .sort({ createdAt: -1 })
+      .select('transaction_id account_id amount transaction_type status createdAt beneficiary_bank beneficiary_name purpose description receiver_account');
     res.json(transactions);
   } catch (err) {
-    res
-      .status(500)
-      .json({ error: "Failed to fetch transactions", details: err.message });
+    res.status(500).json({ 
+      error: "Failed to fetch transactions", 
+      details: err.message 
+    });
   }
 });
 
-// Get transactions for an account
+// Get transactions for an account with additional fields
 router.get("/account/:account_id", async (req, res) => {
   try {
     const transactions = await Transaction.find({
       account_id: req.params.account_id,
-    }).sort({ createdAt: -1 });
+    })
+    .sort({ createdAt: -1 })
+    .select('transaction_id amount transaction_type status createdAt beneficiary_bank beneficiary_name purpose description receiver_account');
+    
     res.json(transactions);
   } catch (err) {
     res.status(500).json({
